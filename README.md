@@ -21,16 +21,21 @@ This is tested on MAC systems only. It uses terminal utility called `screencaptu
 Recommended usage via rvm (.ruby-version) file is present.
 
 ### Not required, but good to have
-
 System uses osascript utility to open the editing tool once the screenshot is taken, in case we need to annotate anything. This can be done manually if the osascript doesn't exist or fails.
 
-## Setup
+### Trello keys
+Use `https://trello.com/app-key` path to generate developer_key and member_token
+Create a file called .env in the root and add contents like this:
+```
+TRELLO_DEVELOPER_KEY=<developer_key>
+TRELLO_MEMBER_TOKEN=<member_token>
+```
 
+## Setup
 Clone the repository and run bundle.
 run `chmod +x ./run` to make sure run is a bash executable file
 
 ## Usage
-
 Every screenshot goes into a checklist of a card. Cards are identified by their card_id. Ever trello card has the adderss in the format:
 `https://trello.com/c/<card_id>/<card_slug>`
 
