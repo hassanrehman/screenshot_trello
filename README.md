@@ -24,7 +24,7 @@ Recommended usage via rvm (.ruby-version) file is present.
 System uses osascript utility to open the editing tool once the screenshot is taken, in case we need to annotate anything. This can be done manually if the osascript doesn't exist or fails.
 
 ### Trello keys
-Use `https://trello.com/app-key` path to generate developer_key and member_token
+Use https://trello.com/app-key path to generate developer_key and member_token
 Create a file called .env in the root and add contents like this:
 ```
 TRELLO_DEVELOPER_KEY=<developer_key>
