@@ -36,19 +36,20 @@ class Reporter
     ss_basename = File.basename(ss_filename, ".*")
     input_message = Readline.readline("\nMessage: #{ss_basename} - ", true)
 
-    puts "attaching: #{attachment_path}"
-    result = card.add_attachment( File.open(attachment_path), ss_filename )
-    attachment_remote_path = JSON.parse( result.body )["url"]
+    if input_message == "cancel" or input_message == "q"
+      puts "Cancelling report..."
 
-    if (input_message||"").strip.length > 0
+    elsif (input_message||"").strip.length > 0
+      puts "attaching: #{attachment_path}"
+      result = card.add_attachment( File.open(attachment_path), ss_filename )
+      attachment_remote_path = JSON.parse( result.body )["url"]
+
       puts "preparing and adding message .. "
       checklist.add_item("[#{ss_basename}](#{attachment_remote_path}) - #{process_message(input_message)}")
     end
 
     FileUtils.rm_f(attachment_path)
     puts "bug report complete.."
-    return
-
   end
 
   def start_reporting
