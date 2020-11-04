@@ -20,40 +20,66 @@ class Reporter
     puts "reporting to:"
     puts "  Board: #{board.name} - Card: #{card.name}"
     puts "  Checklist: #{best_existing_checklist.nil? ? DEFAULT_CHECKLIST_NAME : best_existing_checklist.name}"
-    puts "  Screenshot filename: #{ss_filename = next_screenshot_filename}"
+    # puts "  Screenshot filename: #{ss_filename = next_screenshot_filename}"
     puts ""
 
-    #take message:
+    screenshot_index = max_screenshot_index
+    screenshots = []
+
+    if (path = get_screenshot).present?
+      screenshots << path
+    end
+
+    loop.with_index do |_, i|
+
+      #take message:
+      ss_names = screenshots.map.with_index{|_, i| "SS#{screenshot_index + i + 1}" }
+      input_message = Readline.readline("\nMessage: #{ss_names.join(" - ").presence&.concat(" - ")}", true)
+
+      if input_message == "cancel" or input_message == "q"
+        puts "Cancelling report..."
+        break
+      elsif input_message == "help" or input_message == "h" or input_message == "?"
+        puts "\n\nUse the following commands in message:"
+        puts "cancel (q) - cancel the current bug report.."
+        puts "screenshot (ss) - to attach an additional screenshot for this item.."
+        puts "help (h) - to see this menu..\n\n"
+
+      elsif input_message == "screenshot" or input_message == "ss"
+        if (path = get_screenshot).present?
+          screenshots << path
+        end
+      elsif (input_message||"").strip.length > 0
+        links = screenshots.map.with_index do |path, i|
+            puts "attaching: #{path}"
+            ss_filename = "SS#{screenshot_index + i + 1}"
+            result = card.add_attachment( File.open(path), "#{ss_filename}.png" )
+            path = JSON.parse( result.body )["url"]
+            "[#{ss_filename}](#{path})"
+          end
+
+        puts "preparing and adding message .. "
+        checklist.add_item([links.join(" - "), process_message(input_message)].reject(&:blank?).join(" - "))
+        break
+      end
+    end
+
+    screenshots.each{ |path| FileUtils.rm_f(path) }
+    puts "bug report complete.."
+  end
+
+  def get_screenshot
     begin
       puts "Starting screencapture in 5 seconds...."
-      sleep(5)
-      attachment_path = screencapture_path
+      sleep(1)
+      screencapture_path
     rescue Screencapture::Incomplete => e
       puts "screencapture didn't finish .. cancelling report."
       return
     end
-
-    ss_basename = File.basename(ss_filename, ".*")
-    input_message = Readline.readline("\nMessage: #{ss_basename} - ", true)
-
-    if input_message == "cancel" or input_message == "q"
-      puts "Cancelling report..."
-
-    elsif (input_message||"").strip.length > 0
-      puts "attaching: #{attachment_path}"
-      result = card.add_attachment( File.open(attachment_path), ss_filename )
-      attachment_remote_path = JSON.parse( result.body )["url"]
-
-      puts "preparing and adding message .. "
-      checklist.add_item("[#{ss_basename}](#{attachment_remote_path}) - #{process_message(input_message)}")
-    end
-
-    FileUtils.rm_f(attachment_path)
-    puts "bug report complete.."
   end
 
   def start_reporting
-
     loop do
       report
 
@@ -83,11 +109,14 @@ class Reporter
   end
 
   def next_screenshot_filename
-    max = card.attachments.map{|a| (a.name||"")[/\Ass\d+/i] }.compact
+    "SS#{max_screenshot_index + 1}.png"
+  end
+
+  def max_screenshot_index
+    card.attachments.map{|a| (a.name||"")[/\Ass\d+/i] }.compact
       .map{|a| a.gsub(/\Ass/i, "").to_i }
       .select{|a| a > 0 }
-      .max
-    "SS#{(max||0)+1}.png"
+      .max || 0
   end
 
   def checklist
